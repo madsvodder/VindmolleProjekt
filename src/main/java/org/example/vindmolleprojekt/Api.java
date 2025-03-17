@@ -35,7 +35,6 @@ public class Api {
 
             HttpResponse<String> response;
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            //System.out.println(response.body());
 
             // Parse JSON into an object first
             JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
@@ -44,9 +43,6 @@ public class Api {
 
             Reading latestReading = gson.fromJson(jsonObject.get("latest_reading"), Reading.class);
 
-            //ArrayList<Reading> readings = gson.fromJson(jsonObject.get("latest_readings"), ArrayList.class);
-
-            //data.setReadings(gson.fromJson(jsonObject.get("latest_readings"), ArrayList.class));
 
         } catch (IOException | InterruptedException | URISyntaxException e) {
             e.printStackTrace();
@@ -65,13 +61,14 @@ public class Api {
 
             HttpResponse<String> response;
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            //System.out.println(response.body());
             JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
             Gson gson = new Gson();
 
             // Use TypeToken to properly deserialize into a List of Reading objects
             Type listType = new TypeToken<ArrayList<Reading>>(){}.getType();
             ArrayList<Reading> readings = gson.fromJson(jsonObject.get("latest_readings"), listType);
+
+            System.out.println("Turbines: " + readings.get(0).data.turbines);
 
             return readings;
 

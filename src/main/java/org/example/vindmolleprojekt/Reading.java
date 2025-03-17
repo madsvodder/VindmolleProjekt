@@ -2,6 +2,8 @@ package org.example.vindmolleprojekt;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Map;
+
 public class Reading {
     @SerializedName("logged_at")
     public String loggedAt;
@@ -12,22 +14,13 @@ public class Reading {
     @SerializedName("wind_speed")
     public float windSpeed;
 
-    // Turbines
-    @SerializedName("wtg01")
-    public int wtg01;
+    // Turbines as a map to hold the turbine names and their values
+    @SerializedName("data")
+    public Data data;
 
-    @SerializedName("wtg02")
-    public int wtg02;
-
-    @SerializedName("wtg03")
-    public int wtg03;
-
-    @SerializedName("wtg04")
-    public int wtg04;
-
-    @SerializedName("wtg05")
-    public int wtg05;
-
-    @SerializedName("wtg06")
-    public int wtg06;
+    // The Data class inside Reading
+    public static class Data {
+        @SerializedName("turbines")
+        public Map<String, Integer> turbines;  // Maps turbine name to its value
+    }
 }
