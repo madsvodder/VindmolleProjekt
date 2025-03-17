@@ -60,7 +60,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>org.example.vindmolleprojekt/org.example.vindmolleprojekt.HelloApplication
+                            <mainClass>org.example.vindmolleprojekt/org.example.vindmolleprojekt.MainApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
