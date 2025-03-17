@@ -1,14 +1,35 @@
 package org.example.vindmolleprojekt;
 
+import eu.hansolo.medusa.Gauge;
+import eu.hansolo.medusa.GaugeBuilder;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+
+import javax.management.monitor.GaugeMonitor;
 
 public class MainController {
-    @FXML
-    private Label welcomeText;
 
+    // First Hbox for gauges
     @FXML
-    protected void onHelloButtonClick() {
-        welcomeText.setText("Welcome to JavaFX Application!");
+    private HBox hbox1;
+
+    public void initialize() {
+        setupGauges();
     }
+    public void setupGauges() {
+
+        //Gauge gauge = new Gauge();
+
+        Gauge gauge = GaugeBuilder.create()
+                .title("Speedometer")
+                .unit("km/h")
+                .minValue(0)
+                .maxValue(200)
+                .value(60)
+                .animated(true)
+                .build();
+
+        hbox1.getChildren().add(gauge);
+    }
+
 }
