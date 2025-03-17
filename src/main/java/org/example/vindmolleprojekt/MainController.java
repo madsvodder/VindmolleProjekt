@@ -30,6 +30,12 @@ public class MainController {
                 .build();
 
         hbox1.getChildren().add(gauge);
+
+        Api api = new Api();
+
+        Data data = new Data();
+
+        data.refreshData(api);
     }
 
 }
