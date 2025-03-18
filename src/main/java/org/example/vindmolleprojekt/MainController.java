@@ -70,6 +70,12 @@ public class MainController {
                     Platform.runLater(() -> {
                         System.out.println(getException().getMessage());
                         progress_indicator.setVisible(false);
+
+                        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                        alert.setTitle("Application Error");
+                        alert.setHeaderText("An error has occurred");
+                        alert.setContentText("The application encountered an error and cannot continue. Please restart the application, and ensure that the database connection is working correctly.");
+                        alert.showAndWait();
                     });
                 }
             });
