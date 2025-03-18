@@ -22,33 +22,6 @@ public class Api {
 
     private final String API_URL = "https://vind-og-klima-app.videnomvind.dk/api/stats?location=vindtved";
 
-    public void connect() {
-
-        try {
-            HttpClient client = HttpClient.newBuilder().build();
-
-            HttpRequest request = HttpRequest
-                    .newBuilder()
-                    .uri(new URI(API_URL))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response;
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            // Parse JSON into an object first
-            JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
-
-            Gson gson = new Gson();
-
-            Reading latestReading = gson.fromJson(jsonObject.get("latest_reading"), Reading.class);
-
-
-        } catch (IOException | InterruptedException | URISyntaxException e) {
-            e.printStackTrace();
-        }
-    }
-
     public List getNewReading() {
         try {
             HttpClient client = HttpClient.newBuilder().build();
