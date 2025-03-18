@@ -1,5 +1,7 @@
 package org.example.vindmolleprojekt;
 
+import javafx.concurrent.Task;
+
 import java.lang.reflect.Array;
 import java.sql.*;
 import java.util.ArrayList;
@@ -35,12 +37,7 @@ public class Data {
             for (Reading reading : readings) {
 
                 // Insert reading into the readings table
-                PreparedStatement ps = conn.prepareStatement("MERGE INTO dbo.readings AS target\n" +
-                                "USING (SELECT ? AS wind_effect, ? AS wind_speed, ? AS logged_at) AS source\n" +
-                                "ON target.logged_at = source.logged_at\n" +
-                                "WHEN NOT MATCHED THEN\n" +
-                                "    INSERT (wind_effect, wind_speed, logged_at)\n" +
-                                "    VALUES (source.wind_effect, source.wind_speed, source.logged_at);\n",
+                PreparedStatement ps = conn.prepareStatement("INSERT INTO dbo.readings (wind_effect, wind_speed, logged_at) VALUES (?, ?, ?)",
 
                         // Get the key for the turbines table
                         PreparedStatement.RETURN_GENERATED_KEYS);
@@ -85,12 +82,7 @@ public class Data {
             try {
                 // Merge turbine data into the turbine table
                 PreparedStatement ps = conn.prepareStatement(
-                        "MERGE INTO turbine_readings AS target\n" +
-                                "USING (SELECT ? AS reading_id, ? AS turbine_name, ? AS output) AS source\n" +
-                                "ON target.reading_id = source.reading_id AND target.turbine_name = source.turbine_name\n" +
-                                "WHEN NOT MATCHED THEN\n" +
-                                "    INSERT (reading_id, turbine_name, output)\n" +
-                                "    VALUES (source.reading_id, source.turbine_name, source.output);\n"
+                        "INSERT INTO turbine_readings (reading_id, turbine_name, output) VALUES (?, ?, ?)"
                 );
 
                 // Set variables
@@ -110,4 +102,30 @@ public class Data {
     }
 
 
+    public ReadingFromDatabase getLatestReading() {
+        try (Connection conn = getConnection()) {
+            System.out.println("Connected to the database successfully");
+            ReadingFromDatabase readingFromDatabase = new ReadingFromDatabase();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT TOP 1 logged_at, wind_speed, wind_effect FROM readings ORDER BY logged_at DESC"
+            );
+
+            if (rs.next()) {
+                String loggedAt = rs.getString("logged_at");
+                float windSpeed = rs.getFloat("wind_speed");
+                int windEffect = rs.getInt("wind_effect");
+
+                readingFromDatabase.setLoggedAt(loggedAt);
+                readingFromDatabase.setWindSpeed(windSpeed);
+                readingFromDatabase.setWindEffect(windEffect);
+            }
+            rs.close();
+            stmt.close();
+            return readingFromDatabase;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
