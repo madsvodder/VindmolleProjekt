@@ -7,8 +7,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Data {
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     // Connection string
     private final String CONNECTION_STRING = "jdbc:sqlserver://10.176.111.34;Database=RM_Windmills; User=CSt2023_t_2; Password=CSt2023T2!24; TrustServerCertificate = true";
@@ -102,30 +108,40 @@ public class Data {
     }
 
 
-    public ReadingFromDatabase getLatestReading() {
-        try (Connection conn = getConnection()) {
-            System.out.println("Connected to the database successfully");
-            ReadingFromDatabase readingFromDatabase = new ReadingFromDatabase();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(
-                    "SELECT TOP 1 logged_at, wind_speed, wind_effect FROM readings ORDER BY logged_at DESC"
-            );
+    public Reading getLatestReading() {
+        Future<Reading> future = executor.submit(() -> {
+            try (Connection conn = getConnection()) {
+                System.out.println("Connected to the database successfully");
+                Reading reading = new Reading();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(
+                        "SELECT TOP 1 logged_at, wind_speed, wind_effect FROM readings ORDER BY logged_at DESC"
+                );
 
-            if (rs.next()) {
-                String loggedAt = rs.getString("logged_at");
-                float windSpeed = rs.getFloat("wind_speed");
-                int windEffect = rs.getInt("wind_effect");
+                if (rs.next()) {
+                    String loggedAt = rs.getString("logged_at");
+                    float windSpeed = rs.getFloat("wind_speed");
+                    int windEffect = rs.getInt("wind_effect");
 
-                readingFromDatabase.setLoggedAt(loggedAt);
-                readingFromDatabase.setWindSpeed(windSpeed);
-                readingFromDatabase.setWindEffect(windEffect);
+                    reading.setLoggedAt(loggedAt);
+                    reading.setWindSpeed(windSpeed);
+                    reading.setWindEffect(windEffect);
+                }
+                rs.close();
+                stmt.close();
+                return reading;
+
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-            rs.close();
-            stmt.close();
-            return readingFromDatabase;
+        });
 
-        } catch (SQLException e) {
+        try {
+            // Waits for the task to complete and retrieves the result
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
+
 }

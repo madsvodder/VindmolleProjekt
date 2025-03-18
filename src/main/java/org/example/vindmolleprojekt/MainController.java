@@ -2,19 +2,21 @@ package org.example.vindmolleprojekt;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.HBox;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class MainController {
 
     Api api = new Api();
 
     Data data = new Data();
-
-    ReadingFromDatabase readingFromDatabase = new ReadingFromDatabase();
 
     // First Hbox for gauges
     @FXML
@@ -26,13 +28,59 @@ public class MainController {
     @FXML
     private Label label_loggedat;
 
-    public void initialize() {
-        thread1.start();
+    private boolean isInitialized = false;
 
+    Gauge windSpeedGauge;
+
+    Gauge windEffectGauge;
+
+    Timer myTimer = new Timer();
+
+    public void initialize() {
+        // Run timer every minute
+        myTimer.scheduleAtFixedRate(myTimerTask , 1000l, 1 * (40*1000));
     }
+
+    TimerTask myTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+            System.out.println("TimerTask...");
+
+            // Run the background task on a new thread
+            Thread newThread = new Thread(new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    // Refresh data in the background
+                    data.refreshData(api);
+                    return null;
+                }
+
+                @Override
+                protected void succeeded() {
+                    // UI updates must be done on the FX Application thread
+                    Platform.runLater(() -> {
+                        progress_indicator.setVisible(false);
+                        setupVisuals();
+                    });
+                }
+
+                @Override
+                protected void failed() {
+                    // Handle task failure
+                    Platform.runLater(() -> {
+                        System.out.println(getException().getMessage());
+                        progress_indicator.setVisible(false);
+                    });
+                }
+            });
+            newThread.start();
+        }
+    };
+
+
     public void setupGauges(float windSpeed, int windEffect) {
 
-        Gauge windSpeedGauge = GaugeBuilder.create()
+        windSpeedGauge = GaugeBuilder.create()
                 .skinType(Gauge.SkinType.QUARTER)
                 .title("Wind Speed")
                 .unit("km/h")
@@ -42,7 +90,7 @@ public class MainController {
                 .animated(true)
                 .build();
 
-        Gauge windEffectGauge = GaugeBuilder.create()
+        windEffectGauge = GaugeBuilder.create()
                 .skinType(Gauge.SkinType.QUARTER)
                 .title("Wind Effect")
                 .unit("km/h")
@@ -53,39 +101,31 @@ public class MainController {
                 .build();
 
         hbox1.getChildren().addAll(windSpeedGauge, windEffectGauge);
+
+        isInitialized = true;
     }
 
-    Task<Void> task_refreshData = new Task<>() {
-        @Override
-        protected Void call() throws Exception {
-            progress_indicator.setVisible(true);
-            progress_indicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-            data.refreshData(api);
-            return null;
-        }
+    private void updateGauges(float windSpeed, int windEffect) {
+        windSpeedGauge.setValue(windSpeed);
+        windEffectGauge.setValue(windEffect);
+    }
 
-        @Override
-        protected void succeeded() {
-            progress_indicator.setVisible(false);
-            setupVisuals();
-        }
-
-        @Override
-        protected void failed() {
-            System.out.println(task_refreshData.getException().getMessage());
-        }
-    };
-
-    Thread thread1 = new Thread(task_refreshData);
 
     private void setupVisuals() {
 
         // get latest readings
-        ReadingFromDatabase readingFromDatabase = data.getLatestReading();
+        Reading reading = data.getLatestReading();
 
-        label_loggedat.setText("Logged at: " + readingFromDatabase.getLoggedAt());
+        label_loggedat.setText("Logged at: " + reading.getLoggedAt());
 
-        setupGauges(readingFromDatabase.getWindSpeed(), readingFromDatabase.getWindEffect());
+        if (!isInitialized) {
+            System.out.println("Setting up gauges...");
+            setupGauges(reading.getWindSpeed(), reading.getWindEffect());
+        } else {
+            System.out.println("Updating gauges...");
+            updateGauges(reading.getWindSpeed(), reading.getWindEffect());
+        }
+
     }
 
 }

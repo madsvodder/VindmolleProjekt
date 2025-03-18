@@ -23,4 +23,35 @@ public class Reading {
         @SerializedName("turbines")
         public Map<String, Integer> turbines;  // Maps turbine name to its value
     }
+
+    public String getLoggedAt() {
+        return loggedAt;
+    }
+
+    public int getWindEffect() {
+        return windEffect;
+    }
+    public float getWindSpeed() {
+        return windSpeed;
+    }
+
+    public Data getData() {
+        return data;
+    }
+
+    public void setLoggedAt(String loggedAt) {
+        this.loggedAt = loggedAt;
+    }
+
+    public void setWindEffect(int windEffect) {
+        this.windEffect = windEffect;
+    }
+
+    public void setWindSpeed(float windSpeed) {
+        this.windSpeed = windSpeed;
+    }
+
+    public void setData(Data data) {
+        this.data = data;
+    }
 }
