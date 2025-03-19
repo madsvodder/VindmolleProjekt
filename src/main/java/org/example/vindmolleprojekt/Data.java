@@ -37,39 +37,44 @@ public class Data {
         // Try to connect
         try (Connection conn = getConnection()) {
             System.out.println("Connected to the database successfully");
-            int readingId = 0;
 
             // INSERT INTO DATABASE
             for (Reading reading : readings) {
 
                 // Insert reading into the readings table
-                PreparedStatement ps = conn.prepareStatement("INSERT INTO dbo.readings (wind_effect, wind_speed, logged_at) VALUES (?, ?, ?)",
-
-                        // Get the key for the turbines table
+                PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO dbo.readings (wind_effect, wind_speed, logged_at) " +
+                                "SELECT ?, ?, ? WHERE NOT EXISTS (" +
+                                "SELECT 1 FROM dbo.readings WHERE logged_at = ?)",
                         PreparedStatement.RETURN_GENERATED_KEYS);
+
 
                 // Set the variables
                 ps.setInt(1, reading.windEffect);
                 ps.setDouble(2, reading.windSpeed);
                 ps.setString(3, reading.loggedAt);
-                ps.executeUpdate();
+                ps.setString(4, reading.loggedAt);
 
-                // Retrieve the generated reading_id
-                ResultSet rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    readingId = rs.getInt(1);
+                int rowsAffected = ps.executeUpdate();
+
+                // Check if anything was inserted
+                if (rowsAffected > 0) {
+                    // If a row was inserted, get the generated id
+                    ResultSet rs = ps.getGeneratedKeys();
+                    if (rs.next()) {
+                        int readingId = rs.getInt(1);
+                        // Insert turbine row
+                        insertTurbineReading(conn, readingId, reading);
+                        System.out.println("Inserted reading with ID: " + readingId);
+                    }
+                    rs.close();
+                } else {
+                    // No rows inserted
+                    System.out.println("No new data added for logged_at: " + reading.loggedAt);
                 }
 
                 // Close
                 ps.close();
-                rs.close();
-
-                if (readingId == -1) {
-                    throw new SQLException("Could not get generated key");
-                }
-
-                // Insert turbine reading into turbine_readings table
-                insertTurbineReading(conn, readingId, reading);
 
             }
 
@@ -107,7 +112,6 @@ public class Data {
         }
     }
 
-
     public Reading getLatestReading() {
         Future<Reading> future = executor.submit(() -> {
             try (Connection conn = getConnection()) {
@@ -140,6 +144,34 @@ public class Data {
             // Waits for the task to complete and retrieves the result
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Reading> getAllReadings() {
+        try (Connection conn = getConnection()) {
+            System.out.println("Connected to the database successfully");
+
+            List<Reading> readings = new ArrayList<>();
+
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT * FROM readings ORDER BY logged_at ASC"
+            );
+
+            while (rs.next()) {
+                Reading reading = new Reading();
+                reading.setLoggedAt(rs.getString("logged_at"));
+                reading.setWindSpeed(rs.getFloat("wind_speed"));
+                reading.setWindEffect(rs.getInt("wind_effect"));
+                readings.add(reading);
+            }
+
+            rs.close();
+            stmt.close();
+            return readings;
+
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

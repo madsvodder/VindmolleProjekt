@@ -6,6 +6,7 @@ module org.example.vindmolleprojekt {
     requires com.google.gson;
     requires java.desktop;
     requires java.sql;
+    requires atlantafx.base;
 
 
     opens org.example.vindmolleprojekt to javafx.fxml;

@@ -3,24 +3,17 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.vindmolleprojekt.MainController">
-   <center>
-      <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" BorderPane.alignment="CENTER">
-         <children>
-            <HBox fx:id="hbox1" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" />
-            <Label fx:id="label_loggedat" text="Logged at:">
-               <font>
-                  <Font name="Times New Roman Bold" size="12.0" />
-               </font></Label>
-         </children>
-      </VBox>
-   </center>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.vindmolleprojekt.MainController">
    <bottom>
       <ProgressIndicator fx:id="progress_indicator" progress="0.0" visible="false" BorderPane.alignment="CENTER" />
    </bottom>
@@ -32,28 +25,99 @@
                   <Font name="Times New Roman Bold" size="24.0" />
                </font>
             </Text>
+            <Label fx:id="label_loggedat" text="Label" />
          </children></HBox>
    </top>
    <left>
-      <VBox alignment="CENTER" prefHeight="579.0" prefWidth="131.0" spacing="25.0" BorderPane.alignment="CENTER">
+      <VBox alignment="TOP_CENTER" prefHeight="580.0" prefWidth="172.0" spacing="25.0" BorderPane.alignment="TOP_CENTER">
          <children>
-            <Button mnemonicParsing="false" text="Live Data">
+            <Button alignment="CENTER" maxWidth="150.0" mnemonicParsing="false" text="Overview">
                <font>
                   <Font name="Times New Roman Bold" size="12.0" />
-               </font></Button>
-            <Button mnemonicParsing="false" text="1-Month Overview">
+               </font>
+               <graphic>
+                  <ImageView fitHeight="150.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/overview.png" />
+                     </image>
+                  </ImageView>
+               </graphic></Button>
+            <Button alignment="CENTER" maxWidth="150.0" mnemonicParsing="false" text="1-Month Overview">
                <font>
                   <Font name="Times New Roman Bold" size="12.0" />
-               </font></Button>
-            <Button mnemonicParsing="false" text="Singular Turbine">
+               </font>
+               <graphic>
+                  <ImageView fitHeight="150.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/month.png" />
+                     </image>
+                  </ImageView>
+               </graphic></Button>
+            <Button alignment="CENTER" maxWidth="150.0" mnemonicParsing="false" text="Turbines">
                <font>
                   <Font name="Times New Roman Bold" size="12.0" />
-               </font></Button>
-            <Button mnemonicParsing="false" text="Production Estimate">
+               </font>
+               <graphic>
+                  <ImageView fitHeight="150.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/energy.png" />
+                     </image>
+                  </ImageView>
+               </graphic></Button>
+            <Button alignment="CENTER" maxWidth="150.0" mnemonicParsing="false" text="Production">
                <font>
                   <Font name="Times New Roman Bold" size="12.0" />
-               </font></Button>
+               </font>
+               <graphic>
+                  <ImageView fitHeight="150.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/production.png" />
+                     </image>
+                  </ImageView>
+               </graphic></Button>
          </children>
       </VBox>
    </left>
+   <center>
+      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <AnchorPane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <HBox fx:id="hbox1">
+                     <children>
+                        <VBox fx:id="vbox_windSpeed" alignment="CENTER">
+                           <children>
+                              <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label text="Wind speed" />
+                                    <ImageView fitHeight="150.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/air.png" />
+                                       </image>
+                                    </ImageView>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <VBox fx:id="vbox_windEffect" alignment="CENTER">
+                           <children>
+                              <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label text="Wind effect" />
+                                    <ImageView fitHeight="150.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/wind_power.png" />
+                                       </image>
+                                    </ImageView>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </AnchorPane>
+         </children>
+      </StackPane>
+   </center>
 </BorderPane>

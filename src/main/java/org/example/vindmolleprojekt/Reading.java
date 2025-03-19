@@ -5,6 +5,16 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Map;
 
 public class Reading {
+
+    public String created_at;
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
+    }
+
+    public String getCreated_at() {
+        return created_at;
+    }
     @SerializedName("logged_at")
     public String loggedAt;
 
@@ -53,5 +63,11 @@ public class Reading {
 
     public void setData(Data data) {
         this.data = data;
+    }
+
+    public String getFormattedLoggedAt() {
+        String trimmedT = loggedAt.trim().replaceAll("T", " ");
+        String trimmed8 = trimmedT.substring(0, trimmedT.length() - 8);
+        return trimmed8;
     }
 }
