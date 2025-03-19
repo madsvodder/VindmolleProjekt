@@ -15,6 +15,13 @@ public class Reading {
     public String getCreated_at() {
         return created_at;
     }
+
+    @SerializedName("daily_wind_total")
+    public float dailyWindTotal;
+
+    @SerializedName("date")
+    public String date;
+
     @SerializedName("logged_at")
     public String loggedAt;
 
@@ -34,6 +41,20 @@ public class Reading {
         public Map<String, Integer> turbines;  // Maps turbine name to its value
     }
 
+    public float getDailyWindTotal() {
+        return dailyWindTotal;
+    }
+
+    public void setDailyWindTotal(float dailyWindTotal) {
+        this.dailyWindTotal = dailyWindTotal;
+    }
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
     public String getLoggedAt() {
         return loggedAt;
     }

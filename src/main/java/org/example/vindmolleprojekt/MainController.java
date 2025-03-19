@@ -73,7 +73,8 @@ public class MainController {
                 @Override
                 protected Void call() throws Exception {
                     // Refresh data in the background
-                    data.refreshData(api);
+                    data.insertReading(api);
+                    data.insertMonthReading(api);
 
                     return null;
                 }

@@ -41,7 +41,32 @@ public class Api {
             Type listType = new TypeToken<ArrayList<Reading>>(){}.getType();
             ArrayList<Reading> readings = gson.fromJson(jsonObject.get("latest_readings"), listType);
 
-            System.out.println("Turbines: " + readings.get(0).data.turbines);
+            return readings;
+
+        } catch (IOException | InterruptedException | URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List getNewReadingLastMonth() {
+        try {
+            HttpClient client = HttpClient.newBuilder().build();
+
+            HttpRequest request = HttpRequest
+                    .newBuilder()
+                    .uri(new URI(API_URL))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response;
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
+            Gson gson = new Gson();
+
+            // Use TypeToken to properly deserialize into a List of Reading objects
+            Type listType = new TypeToken<ArrayList<Reading>>(){}.getType();
+            ArrayList<Reading> readings = gson.fromJson(jsonObject.get("last_month"), listType);
 
             return readings;
 

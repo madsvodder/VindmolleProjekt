@@ -1,8 +1,5 @@
 package org.example.vindmolleprojekt;
 
-import javafx.concurrent.Task;
-
-import java.lang.reflect.Array;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +26,7 @@ public class Data {
         }
     }
 
-    public void refreshData(Api api) {
+    public void insertReading(Api api) {
 
         // Get new readings from the API in a list
         List<Reading> readings = api.getNewReading();
@@ -72,6 +69,40 @@ public class Data {
                     // No rows inserted
                     System.out.println("No new data added for logged_at: " + reading.loggedAt);
                 }
+
+                // Close
+                ps.close();
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void insertMonthReading(Api api) {
+        // Get new readings from the API in a list
+        List<Reading> readings = api.getNewReadingLastMonth();
+
+        // Try to connect
+        try (Connection conn = getConnection()) {
+            System.out.println("Connected to the database successfully");
+
+            // INSERT INTO DATABASE
+            for (Reading reading : readings) {
+
+                // Insert reading into the readings table
+                PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO dbo.readings_lastmonth (date, daily_wind_total) " +
+                                "SELECT ?, ? WHERE NOT EXISTS (" +
+                                "SELECT 1 FROM dbo.readings_lastmonth WHERE date = ?)");
+
+                // Set the variables
+                ps.setString(1, reading.date);
+                ps.setFloat(2, reading.dailyWindTotal);
+                ps.setString(3, reading.date);
+                ps.executeUpdate();
 
                 // Close
                 ps.close();
