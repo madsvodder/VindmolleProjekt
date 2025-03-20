@@ -2,6 +2,7 @@ package org.example.vindmolleprojekt;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -11,10 +12,14 @@ import java.util.concurrent.Future;
 
 public class Data {
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     // Connection string
     private final String CONNECTION_STRING = "jdbc:sqlserver://10.176.111.34;Database=RM_Windmills; User=CSt2023_t_2; Password=CSt2023T2!24; TrustServerCertificate = true";
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
 
     // Get connection to the database
     private Connection getConnection() {
@@ -47,10 +52,10 @@ public class Data {
 
 
                 // Set the variables
-                ps.setInt(1, reading.windEffect);
-                ps.setDouble(2, reading.windSpeed);
-                ps.setString(3, reading.loggedAt);
-                ps.setString(4, reading.loggedAt);
+                ps.setInt(1, reading.getWindEffect());
+                ps.setDouble(2, reading.getWindSpeed());
+                ps.setString(3, reading.getLoggedAt());
+                ps.setString(4, reading.getLoggedAt());
 
                 int rowsAffected = ps.executeUpdate();
 
@@ -67,7 +72,7 @@ public class Data {
                     rs.close();
                 } else {
                     // No rows inserted
-                    System.out.println("No new data added for logged_at: " + reading.loggedAt);
+                    System.out.println("No new data added for logged_at: " + reading.getFormattedLoggedAt());
                 }
 
                 // Close
@@ -99,9 +104,9 @@ public class Data {
                                 "SELECT 1 FROM dbo.readings_lastmonth WHERE date = ?)");
 
                 // Set the variables
-                ps.setString(1, reading.date);
-                ps.setFloat(2, reading.dailyWindTotal);
-                ps.setString(3, reading.date);
+                ps.setString(1, reading.getDate());
+                ps.setFloat(2, reading.getDailyWindTotal());
+                ps.setString(3, reading.getDate());
                 ps.executeUpdate();
 
                 // Close
@@ -115,10 +120,38 @@ public class Data {
         }
     }
 
+    public Future<List<Reading>> getMonthReading(Api api) {
+        return executorService.submit(() -> {
+            try (Connection conn = getConnection()) {
+                System.out.println("Connected to the database successfully");
+                List<Reading> readings = new ArrayList<>();
+
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(
+                        "SELECT * FROM readings_lastmonth ORDER BY date ASC"
+                );
+
+                while (rs.next()) {
+                    Reading reading = new Reading();
+                    reading.setDate(rs.getString("date"));
+                    reading.setDailyWindTotal(rs.getFloat("daily_wind_total"));
+                    readings.add(reading);
+                }
+
+                rs.close();
+                stmt.close();
+                return readings;
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     private void insertTurbineReading(Connection conn, int readingId, Reading reading) {
 
         // For each turbine entry
-        for (Map.Entry<String, Integer> turbineEntry : reading.data.turbines.entrySet()) {
+        for (Map.Entry<String, Integer> turbineEntry : reading.getData().getTurbines().entrySet()) {
             System.out.println("Inserting turbine: " + turbineEntry.getKey());
 
             try {
@@ -143,8 +176,47 @@ public class Data {
         }
     }
 
+    public Reading getTurbineReading() {
+        Future<Reading> future = executorService.submit(() -> {
+        try (Connection conn = getConnection()) {
+            System.out.println("Connected to the database successfully");
+            Reading reading = new Reading();
+            // Initialize data
+            reading.data = new Reading.Data();
+            // Initialize the map
+            reading.data.turbines = new HashMap<>();
+
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT TOP 6 turbine_name, output FROM turbine_readings ORDER BY reading_id DESC"
+            );
+
+            // Use while to read multiple rows
+            while (rs.next()) {
+                String turbineName = rs.getString("turbine_name");
+                int output = rs.getInt("output");
+
+                reading.data.getTurbines().put(turbineName, output);
+            }
+            rs.close();
+            stmt.close();
+            return reading;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        });
+
+        try {
+            // Waits for the task to complete and retrieves the result
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public Reading getLatestReading() {
-        Future<Reading> future = executor.submit(() -> {
+        Future<Reading> future = executorService.submit(() -> {
             try (Connection conn = getConnection()) {
                 System.out.println("Connected to the database successfully");
                 Reading reading = new Reading();
@@ -180,6 +252,7 @@ public class Data {
     }
 
     public List<Reading> getAllReadings() {
+        Future<List<Reading>> future = executorService.submit(() -> {
         try (Connection conn = getConnection()) {
             System.out.println("Connected to the database successfully");
 
@@ -202,7 +275,15 @@ public class Data {
             stmt.close();
             return readings;
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        });
+
+        try {
+            // Waits for the task to complete and retrieves the result
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }

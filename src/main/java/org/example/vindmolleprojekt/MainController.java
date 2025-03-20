@@ -11,18 +11,28 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainController {
 
     Api api = new Api();
 
     Data data = new Data();
+
+    @FXML
+    private AnchorPane monthPane;
+
+    @FXML
+    private AnchorPane overviewPane;
 
     // First Hbox for gauges
     @FXML
@@ -40,27 +50,58 @@ public class MainController {
     @FXML
     private Label label_loggedat;
 
-    private boolean isInitialized = false;
+    @FXML
+    private HBox hbox_overview;
+
+    @FXML
+    private AnchorPane turbinesPane;
+
+    @FXML
+    private GridPane turbineGaugesGrid;
+
+    @FXML
+    private VBox vbox_lineChartDay;
 
     Gauge windSpeedGauge;
 
     Gauge windEffectGauge;
 
+    Gauge turbine1Gauge;
+    Gauge turbine2Gauge;
+    Gauge turbine3Gauge;
+    Gauge turbine4Gauge;
+    Gauge turbine5Gauge;
+    Gauge turbine6Gauge;
+
     Timer myTimer = new Timer();
 
-    // Creating the x and y axes for the chart
-    CategoryAxis xAxis = new CategoryAxis();
-    NumberAxis yAxis = new NumberAxis();
-    // Creating the line chart with x and y axes
-    LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
-    // Prepare the data for the chart
-    XYChart.Series<String, Number> series = new XYChart.Series<>();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+
+    // Overview Chart
+    CategoryAxis xAxisD = new CategoryAxis();
+    NumberAxis yAxisD = new NumberAxis();
+    LineChart<String, Number> lineChartDay = new LineChart<>(xAxisD, yAxisD);
+    XYChart.Series<String, Number> seriesD = new XYChart.Series<>();
+
+    // Month chart
+    CategoryAxis xAxisM = new CategoryAxis();
+    NumberAxis yAxisM = new NumberAxis();
+    LineChart<String, Number> lineChartMonth = new LineChart<>(xAxisM, yAxisM);
+    XYChart.Series<String, Number> seriesM = new XYChart.Series<>();
+
+    public Timer getTimer() {
+        return myTimer;
+    }
+    public Data getData() {
+        return data;
+    }
 
     public void initialize() {
         // Run timer every minute
-        myTimer.scheduleAtFixedRate(myTimerTask , 1000l, 11 * (60*1000));
+        myTimer.scheduleAtFixedRate(myTimerTask, 1000l, 11 * (60 * 1000));
         setupGauges();
-        setupLinechart();
+        setupLineCharts();
+        progress_indicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
     }
 
     TimerTask myTimerTask = new TimerTask() {
@@ -73,6 +114,7 @@ public class MainController {
                 @Override
                 protected Void call() throws Exception {
                     // Refresh data in the background
+                    progress_indicator.setVisible(true);
                     data.insertReading(api);
                     data.insertMonthReading(api);
 
@@ -84,9 +126,16 @@ public class MainController {
                     // UI updates must be done on the FX Application thread
                     Platform.runLater(() -> {
                         progress_indicator.setVisible(false);
+
                         Reading reading = data.getLatestReading();
-                        updateGauges(reading.windSpeed, reading.windEffect);
-                        updateLineChart();
+                        Reading turbineReading = data.getTurbineReading();
+
+                        label_loggedat.setText("Logged at: " + reading.getFormattedLoggedAt());
+
+                        updateGauges(reading.getWindSpeed(), reading.getWindEffect());
+                        updateTurbineGauges(turbineReading);
+                        updateLineChartDay();
+                        updateLineChartMonth();
                     });
                 }
 
@@ -114,7 +163,7 @@ public class MainController {
 
         windSpeedGauge = GaugeBuilder.create()
                 .skinType(Gauge.SkinType.MODERN)
-                .prefSize(175,175)
+                .prefSize(175, 175)
                 .title("Wind Speed")
                 .unit("m/s")
                 .minValue(0)
@@ -125,7 +174,7 @@ public class MainController {
 
         windEffectGauge = GaugeBuilder.create()
                 .skinType(Gauge.SkinType.MODERN)
-                .prefSize(175,175)
+                .prefSize(175, 175)
                 .title("Wind Effect")
                 .unit("KW")
                 .minorTickSpace(100)
@@ -135,8 +184,87 @@ public class MainController {
                 .animated(true)
                 .build();
 
-            vbox_windSpeed.getChildren().add(windSpeedGauge);
-            vbox_windEffect.getChildren().add(windEffectGauge);
+        turbine1Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 1")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbine2Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 2")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbine3Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 3")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbine4Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 4")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbine5Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 5")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbine6Gauge = GaugeBuilder.create()
+                .skinType(Gauge.SkinType.MODERN)
+                .prefSize(175, 175)
+                .title("Turbine 6")
+                .unit("KW")
+                .minorTickSpace(100)
+                .minValue(-500)
+                .maxValue(500)
+                .value(0)
+                .animated(true)
+                .build();
+
+        turbineGaugesGrid.add(turbine1Gauge, 0, 0);
+        turbineGaugesGrid.add(turbine2Gauge, 1, 0);
+        turbineGaugesGrid.add(turbine3Gauge, 2, 0);
+        turbineGaugesGrid.add(turbine4Gauge, 0, 1);
+        turbineGaugesGrid.add(turbine5Gauge, 1, 1);
+        turbineGaugesGrid.add(turbine6Gauge, 2, 1);
+
+        vbox_windSpeed.getChildren().add(windSpeedGauge);
+        vbox_windEffect.getChildren().add(windEffectGauge);
     }
 
     private void updateGauges(float windSpeed, int windEffect) {
@@ -144,16 +272,40 @@ public class MainController {
         windEffectGauge.setValue(windEffect);
     }
 
-    private void setupLinechart() {
-        lineChart.setAnimated(false);
-        yAxis.setLabel("KW Produced");
-        xAxis.setLabel("Day");
-        series.setName("KW Produced");
-        lineChart.setTitle("Windmill KW Production");
-        hbox1.getChildren().add(lineChart);
+    private void updateTurbineGauges(Reading reading) {
+        turbine1Gauge.setValue(reading.getData().getTurbines().get("wtg01"));
+        turbine2Gauge.setValue(reading.getData().getTurbines().get("wtg02"));
+        turbine3Gauge.setValue(reading.getData().getTurbines().get("wtg03"));
+        turbine4Gauge.setValue(reading.getData().getTurbines().get("wtg04"));
+        turbine5Gauge.setValue(reading.getData().getTurbines().get("wtg05"));
+        turbine6Gauge.setValue(reading.getData().getTurbines().get("wtg06"));
     }
 
-    private void updateLineChart() {
+    private void setupLineCharts() {
+
+        // LineChart Day
+        lineChartDay.setAnimated(false);
+        yAxisD.setLabel("KW Produced");
+        xAxisD.setLabel("Day");
+        seriesD.setName("KW Produced");
+        lineChartDay.setTitle("Windmill KW Production");
+        vbox_lineChartDay.getChildren().add(lineChartDay);
+        lineChartDay.setPrefWidth(1000);
+
+        // LineChart Month
+        lineChartMonth.setAnimated(false);
+        lineChartMonth.setPrefWidth(1000);
+        yAxisM.setLabel("KW Produces");
+        xAxisM.setLabel("Day");
+        seriesM.setName("KW Produced");
+        lineChartMonth.setTitle("Daily production - Month overview");
+        hbox_overview.getChildren().add(lineChartMonth);
+    }
+
+    private void updateLineChartDay() {
+
+        lineChartDay.getData().remove(seriesD);
+        seriesD.getData().clear();
 
         List<Reading> latestReadings = data.getAllReadings();
 
@@ -161,14 +313,57 @@ public class MainController {
 
         for (Reading reading : latestReadings) {
             if (counter % 10 == 0) {
-                series.getData().add(new XYChart.Data<>(reading.getFormattedLoggedAt(), reading.windEffect)); // Day 1, 150 KW
-                System.out.println(reading.getFormattedLoggedAt());
+                seriesD.getData().add(new XYChart.Data<>(reading.getFormattedLoggedAt(), reading.getWindEffect())); // Day 1, 150 KW
             }
             counter++;
         }
 
-        // Add the series to the chart
-        lineChart.getData().add(series);
+        // Add the seriesD to the chart
+        lineChartDay.getData().add(seriesD);
+    }
+
+    private void updateLineChartMonth() {
+
+        executorService.submit(() -> {
+            try {
+                List<Reading> latestReadings = data.getMonthReading(api).get();
+
+                Platform.runLater(() -> {
+                    lineChartMonth.getData().remove(seriesM);
+                    seriesM.getData().clear();
+
+                    for (Reading reading : latestReadings) {
+                        seriesM.getData().add(new XYChart.Data<>(reading.getDate(), reading.getDailyWindTotal()));
+                    }
+
+                    lineChartMonth.getData().add(seriesM);
+                });
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @FXML
+    private void switchToOverview() {
+        overviewPane.setVisible(true);
+        monthPane.setVisible(false);
+        turbinesPane.setVisible(false);
+    }
+
+    @FXML
+    private void switchToMonthView() {
+        overviewPane.setVisible(false);
+        monthPane.setVisible(true);
+        turbinesPane.setVisible(false);
+    }
+
+    @FXML
+    private void switchToTurbinesView() {
+        overviewPane.setVisible(false);
+        monthPane.setVisible(false);
+        turbinesPane.setVisible(true);
     }
 
 }
